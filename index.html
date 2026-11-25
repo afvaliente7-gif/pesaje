@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0c0c0c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PESAJE">
+<title>PESAJE</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+:root{--bg:#0c0c0c;--card:#1d1d1d;--line:#3d3a2e;--txt:#ffffff;--mut:#bdb49a;--ok:#1fa35b;--ok2:#178048;--warn:#f2a81d;--bad:#e5484d;--acc:#f5c400}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--txt);font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;font-weight:800;text-transform:uppercase}
+input,button{font:inherit;text-transform:uppercase;color:inherit}
+button{cursor:pointer;border:0;border-radius:14px}
+.top{position:sticky;top:0;z-index:5;background:var(--bg);padding:calc(8px + env(safe-area-inset-top)) 10px 8px;display:flex;gap:8px;align-items:center}
+.tab{flex:1;padding:14px 0;font-size:20px;background:var(--card);color:var(--mut)}
+.tab.on{background:var(--acc);color:#1a1400}
+#sync{font-size:12px;padding:6px 8px;border-radius:10px;background:var(--card);white-space:nowrap;min-width:64px;text-align:center}
+#sync.pend{background:var(--warn);color:#2b1c00}
+main{max-width:640px;margin:0 auto;padding:6px 12px 200px}
+.lbl{font-size:13px;color:var(--mut);margin:14px 2px 6px}
+.fld{width:100%;padding:14px;font-size:24px;background:var(--card);border:2px solid var(--line);border-radius:14px;outline:none}
+.fld:focus{border-color:var(--acc)}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:8px 0 2px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;padding:10px 14px;font-size:16px;background:#2e2b22;border-radius:12px}
+.chip.on{background:var(--acc);color:#1a1400}
+.locked{display:flex;justify-content:space-between;align-items:center;padding:14px;background:var(--card);border:2px solid var(--acc);border-radius:14px;font-size:24px}
+.recbox{margin-top:12px;background:#183a2c;border:2px solid var(--ok);border-radius:14px;padding:10px 12px}
+.recbox .t{font-size:13px;color:#9be3b9;margin-bottom:6px}
+.recline{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:17px;padding:4px 0}
+.x{background:transparent;color:var(--mut);font-size:18px;padding:4px 8px}
+.x.arm{background:var(--bad);color:#fff}
+.hdr,.row{display:grid;grid-template-columns:34px 1fr 1.5fr 56px;gap:8px;align-items:center}
+.hdr{font-size:13px;color:var(--mut);margin:16px 2px 6px}
+.row{margin-bottom:8px}
+.row .n{color:var(--mut);font-size:16px;text-align:center}
+.row input{width:100%;padding:12px 6px;font-size:28px;text-align:center;background:var(--card);border:2px solid var(--line);border-radius:12px;outline:none}
+.row input:focus{border-color:var(--acc)}
+.del{height:100%;background:#3a2330;color:#ff9ca0;font-size:22px}
+.del.arm{background:var(--bad);color:#fff;font-size:12px}
+.add{width:100%;padding:16px;font-size:22px;background:transparent;border:3px dashed var(--line);color:var(--txt)}
+.foot{position:fixed;left:0;right:0;bottom:0;z-index:6;background:#000;border-top:2px solid var(--line);padding:10px 12px calc(10px + env(safe-area-inset-bottom))}
+.foot .in{max-width:640px;margin:0 auto}
+.tots{display:grid;grid-template-columns:1fr 1.4fr;gap:8px;margin-bottom:8px}
+.tot{background:var(--card);border-radius:12px;padding:6px 12px}
+.tot .k{font-size:12px;color:var(--mut)}
+.tot .v{font-size:34px;line-height:1.1}
+.save{width:100%;padding:18px;font-size:26px;background:var(--ok);color:#fff}
+.save:active{background:var(--ok2)}
+.err{color:#ff9ca0;font-size:15px;text-align:center;margin:0 0 8px;min-height:0}
+.fin{width:100%;margin-top:14px;padding:16px;font-size:20px;background:#2e2b22}
+.modal{position:fixed;inset:0;z-index:20;background:rgba(0,0,0,.65);display:none;align-items:center;justify-content:center;padding:20px}
+.modal.on{display:flex}
+.mbox{background:var(--card);border-radius:18px;padding:22px;width:100%;max-width:440px;text-align:center}
+.mbox h2{font-size:24px;margin:0 0 6px}
+.mbox p{color:var(--mut);font-size:15px;margin:0 0 18px}
+.mbtn{width:100%;padding:20px;font-size:26px;margin-top:10px}
+.si{background:var(--ok);color:#fff}.no{background:#4a4535;color:#fff}
+#toast{position:fixed;left:50%;top:80px;transform:translateX(-50%);background:var(--ok);color:#fff;padding:14px 20px;border-radius:14px;font-size:18px;z-index:30;display:none;max-width:90%;text-align:center}
+.day{font-size:14px;color:var(--mut);margin:18px 2px 8px}
+.rc{width:100%;text-align:left;background:var(--card);border:2px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:10px;display:block}
+.rc .a{display:flex;justify-content:space-between;gap:8px;font-size:20px}
+.rc .b{font-size:14px;color:var(--mut);margin-top:4px}
+.bdg{font-size:12px;padding:4px 8px;border-radius:8px;white-space:nowrap;align-self:flex-start}
+.b-ok{background:var(--ok);color:#fff}.b-pen{background:#4a4535}.b-ab{background:var(--warn);color:#2b1c00}
+.back{background:#2e2b22;padding:12px 16px;font-size:18px;margin:8px 0}
+.dh{font-size:26px;margin:6px 0 2px}.ds{color:var(--mut);font-size:15px;margin-bottom:10px}
+.it{background:var(--card);border-radius:14px;padding:12px 14px;margin-bottom:12px}
+.it .nm{font-size:22px;margin-bottom:8px}
+.g2{display:grid;grid-template-columns:1fr 1.4fr;gap:8px}
+.g2 .k{font-size:12px;color:var(--mut)}.g2 .v{font-size:28px}
+.bol{display:grid;grid-template-columns:1fr 1.4fr;gap:8px;align-items:center;margin-top:10px}
+.bol input{width:100%;padding:10px;font-size:24px;text-align:center;background:#000;border:2px solid var(--line);border-radius:12px;outline:none}
+.res{margin-top:8px;padding:10px;border-radius:10px;font-size:18px;text-align:center}
+.r-ok{background:#183a2c;color:#7ee2a8}.r-w{background:#3d2e0c;color:#ffc95c}
+.vp{background:transparent;color:var(--acc);font-size:14px;padding:8px 0}
+.pes{font-size:16px;color:var(--mut);display:grid;grid-template-columns:40px 1fr 1fr;gap:4px;padding:2px 0}
+.ctl{width:100%;padding:18px;font-size:22px;margin-top:6px}
+.ctl.off{background:var(--ok);color:#fff}.ctl.onn{background:#4a4535;color:#fff}
+.empty{color:var(--mut);text-align:center;margin-top:40px;font-size:18px}
+.hide{display:none!important}
+#login{position:fixed;inset:0;z-index:40;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;gap:14px}
+#login img{width:130px;height:130px;border-radius:28px}
+#login input{width:100%;max-width:340px;padding:18px;font-size:34px;letter-spacing:10px;text-align:center;background:var(--card);border:2px solid var(--line);border-radius:14px;outline:none}
+#login input:focus{border-color:var(--acc)}
+#login button{width:100%;max-width:340px;padding:18px;font-size:24px;background:var(--acc);color:#1a1400}
+#lErr{color:#ff9ca0;font-size:16px;text-align:center;max-width:340px;min-height:20px}
+.reset{width:100%;margin-top:30px;padding:14px;font-size:15px;background:#2e2b22;color:var(--mut)}
+</style>
+</head>
+<body>
+<div class="top">
+  <button class="tab on" id="tPesar">⚖ PESAR</button>
+  <button class="tab" id="tCtl">✔ CONTROL</button>
+  <div id="sync">…</div>
+</div>
+
+<main id="vPesar">
+  <div class="lbl">PROVEEDOR</div>
+  <div id="provEdit">
+    <input class="fld" id="prov" autocomplete="off" autocapitalize="characters" placeholder="ESCRIBÍ O ELEGÍ ABAJO">
+    <div class="chips" id="provChips"></div>
+  </div>
+  <div id="provLock" class="locked hide"><span id="provLockTxt"></span><span style="font-size:13px;color:var(--mut)">MISMA BOLETA</span></div>
+
+  <div id="recBox" class="recbox hide"><div class="t">YA CARGADO EN ESTA RECEPCIÓN</div><div id="recLines"></div></div>
+
+  <div class="lbl">PRODUCTO</div>
+  <input class="fld" id="prod" autocomplete="off" autocapitalize="characters" placeholder="EJ: QUESO CREMOSO">
+  <div class="chips" id="prodChips"></div>
+
+  <div class="hdr"><span>#</span><span style="text-align:center">PIEZAS</span><span style="text-align:center">KILOS</span><span></span></div>
+  <div id="rows"></div>
+  <button class="add" id="addRow">+ RENGLÓN</button>
+  <button class="fin hide" id="finRec">TERMINAR RECEPCIÓN</button>
+</main>
+
+<main id="vCtl" class="hide">
+  <div id="ctlList"></div>
+  <div id="ctlDet" class="hide"></div>
+</main>
+
+<div class="foot" id="foot">
+  <div class="in">
+    <div class="err" id="err"></div>
+    <div class="tots">
+      <div class="tot"><div class="k">TOTAL PIEZAS</div><div class="v" id="tP">0</div></div>
+      <div class="tot"><div class="k">TOTAL KILOS</div><div class="v" id="tK">0,000</div></div>
+    </div>
+    <button class="save" id="save">GUARDAR</button>
+  </div>
+</div>
+
+<div class="modal" id="mMas">
+  <div class="mbox">
+    <h2>✅ GUARDADO</h2>
+    <p>¿HAY MÁS PRODUCTOS DE ESTA MISMA BOLETA / PROVEEDOR?</p>
+    <button class="mbtn si" id="mSi">SÍ, OTRO PRODUCTO</button>
+    <button class="mbtn no" id="mNo">NO, TERMINÉ</button>
+  </div>
+</div>
+<div id="toast"></div>
+<div id="login" class="hide">
+  <img src="icon-192.png" alt="">
+  <div style="font-size:26px">PESAJE</div>
+  <input id="lPass" type="password" inputmode="numeric" pattern="[0-9]*" autocomplete="off" placeholder="CLAVE">
+  <button id="lBtn">ENTRAR</button>
+  <div id="lErr"></div>
+</div>
+
+<script>
+const API = 'https://script.google.com/macros/s/AKfycbyWQM9IG3qBZ3dAgi9zpvNDzfMZREtY-eDlmZuL5Gs8zJknaU-KiylXbnGCScEb97lQ/exec';
+const TOL = 0.25;
+const $ = id => document.getElementById(id);
+const LS = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+};
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const num = s => { const n = parseFloat(String(s ?? '').trim().replace(',', '.')); return isNaN(n) ? 0 : n; };
+const r3 = n => Math.round(n * 1000) / 1000;
+const kg = n => r3(n).toFixed(3).replace('.', ',');
+const up = s => String(s || '').trim().replace(/\s+/g, ' ').toUpperCase();
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+let draft = LS.get('pz_draft', null);
+let queue = LS.get('pz_queue', []);
+let cache = LS.get('pz_cache', []);
+let names = LS.get('pz_names', { prov: {}, prod: {} });
+let lastP = LS.get('pz_lastP', 2);
+let view = 'pesar', detId = null, openPes = {};
+let auth = LS.get('pz_auth', null);
+let srvNames = LS.get('pz_srvnames', { prov: [], prod: [] });
+let dev = LS.get('pz_dev', null);
+if (!dev) { dev = uid() + uid(); LS.set('pz_dev', dev); }
+const isAdmin = () => auth && auth.role === 'admin';
+
+function newDraft() { return { id: uid(), fecha: null, proveedor: '', items: [], cur: { producto: '', rows: [{ p: lastP, k: '' }] } }; }
+if (!draft) draft = newDraft();
+function saveDraft() { LS.set('pz_draft', draft); }
+
+/* ---------- TOAST ---------- */
+let tt;
+function toast(m, c) { const t = $('toast'); t.textContent = m; t.style.background = c || 'var(--ok)'; t.style.display = 'block'; clearTimeout(tt); tt = setTimeout(() => t.style.display = 'none', 2200); }
+
+/* ---------- NOMBRES RECORDADOS ---------- */
+function remember(kind, n) { if (!n) return; names[kind][n] = Date.now(); LS.set('pz_names', names); }
+function allNames(kind) {
+  const m = Object.assign({}, names[kind]);
+  (srvNames[kind] || []).forEach((n, i) => { m[n] = Math.max(m[n] || 0, 1e6 - i); });
+  cache.forEach(r => {
+    const t = new Date(r.fecha).getTime() || 0;
+    if (kind === 'prov' && r.proveedor) m[up(r.proveedor)] = Math.max(m[up(r.proveedor)] || 0, t);
+    if (kind === 'prod') (r.items || []).forEach(i => { const n = up(i.producto); if (n) m[n] = Math.max(m[n] || 0, t); });
+  });
+  return Object.keys(m).sort((a, b) => m[b] - m[a]);
+}
+function chips(boxId, kind, inputId) {
+  const q = up($(inputId).value);
+  const list = allNames(kind).filter(n => !q || n.includes(q)).slice(0, 12);
+  $(boxId).innerHTML = list.map(n => `<button class="chip${n === q ? ' on' : ''}" data-n="${esc(n)}">${esc(n)}</button>`).join('');
+  $(boxId).querySelectorAll('.chip').forEach(b => b.onclick = () => {
+    $(inputId).value = b.dataset.n;
+    if (kind === 'prov') draft.proveedor = b.dataset.n; else draft.cur.producto = b.dataset.n;
+    saveDraft(); chips(boxId, kind, inputId);
+    if (kind === 'prov') $('prod').focus(); else focusKilos(firstEmptyRow());
+  });
+}
+
+/* ---------- PANTALLA PESAR ---------- */
+function renderPesar() {
+  const locked = draft.items.length > 0;
+  $('provEdit').classList.toggle('hide', locked);
+  $('provLock').classList.toggle('hide', !locked);
+  $('provLockTxt').textContent = draft.proveedor;
+  if (!locked) { $('prov').value = draft.proveedor; chips('provChips', 'prov', 'prov'); }
+  $('recBox').classList.toggle('hide', !locked);
+  $('recLines').innerHTML = draft.items.map(it => {
+    const t = tot(it.pesadas);
+    return `<div class="recline"><span>${esc(it.producto)}: ${t.p} PZ · ${kg(t.k)} KG</span><button class="x" data-id="${it.id}">✕</button></div>`;
+  }).join('');
+  $('recLines').querySelectorAll('.x').forEach(b => b.onclick = () => armDel(b, () => {
+    draft.items = draft.items.filter(i => i.id !== b.dataset.id);
+    saveDraft(); enqueueRec(false); renderPesar();
+  }));
+  $('prod').value = draft.cur.producto;
+  chips('prodChips', 'prod', 'prod');
+  renderRows();
+  $('finRec').classList.toggle('hide', !locked);
+}
+function renderRows() {
+  $('rows').innerHTML = draft.cur.rows.map((r, i) => `
+    <div class="row" data-i="${i}">
+      <span class="n">${i + 1}</span>
+      <input class="p" inputmode="numeric" pattern="[0-9]*" enterkeyhint="next" value="${esc(r.p)}" data-i="${i}">
+      <input class="k" inputmode="decimal" enterkeyhint="next" value="${num(r.k) > 0 ? kg(num(r.k)) : esc(r.k)}" placeholder="0,000" data-i="${i}">
+      <button class="del" data-i="${i}">🗑</button>
+    </div>`).join('');
+  $('rows').querySelectorAll('input.p').forEach(el => {
+    el.oninput = () => { draft.cur.rows[+el.dataset.i].p = el.value.replace(/\D/g, ''); saveDraft(); totals(); };
+    el.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); focusKilos(+el.dataset.i); } };
+    el.onfocus = () => el.select();
+  });
+  $('rows').querySelectorAll('input.k').forEach(el => {
+    el.oninput = () => { el.value = el.value.replace(/[^0-9.,]/g, ''); draft.cur.rows[+el.dataset.i].k = el.value; saveDraft(); totals(); };
+    el.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); nextRow(+el.dataset.i); } };
+    el.onblur = () => { if (num(el.value) > 0) { el.value = kg(num(el.value)); draft.cur.rows[+el.dataset.i].k = el.value; saveDraft(); } };
+  });
+  $('rows').querySelectorAll('.del').forEach(b => b.onclick = () => armDel(b, () => {
+    const i = +b.dataset.i;
+    if (draft.cur.rows.length === 1) draft.cur.rows = [{ p: lastP, k: '' }];
+    else draft.cur.rows.splice(i, 1);
+    saveDraft(); renderRows();
+  }, '¿BORRAR?'));
+  totals();
+}
+function armDel(b, fn, txt) {
+  if (b.classList.contains('arm')) { fn(); return; }
+  const o = b.textContent; b.classList.add('arm'); b.textContent = txt || '¿QUITAR?';
+  setTimeout(() => { if (b.isConnected) { b.classList.remove('arm'); b.textContent = o; } }, 3000);
+}
+function focusKilos(i) { const el = $('rows').querySelectorAll('input.k')[i]; if (el) { el.focus(); el.scrollIntoView({ block: 'center', behavior: 'smooth' }); } }
+function firstEmptyRow() { const i = draft.cur.rows.findIndex(r => !String(r.k).trim()); return i < 0 ? draft.cur.rows.length - 1 : i; }
+function nextRow(i) {
+  if (i < draft.cur.rows.length - 1) { focusKilos(i + 1); return; }
+  addRow();
+}
+function addRow() {
+  const last = draft.cur.rows[draft.cur.rows.length - 1];
+  const p = last && String(last.p).trim() ? last.p : lastP;
+  draft.cur.rows.push({ p, k: '' });
+  saveDraft(); renderRows(); focusKilos(draft.cur.rows.length - 1);
+}
+function tot(rows) {
+  let p = 0, k = 0;
+  (rows || []).forEach(r => { if (num(r.k) > 0) { p += parseInt(r.p) || 0; k += num(r.k); } });
+  return { p, k: r3(k) };
+}
+function totals() { const t = tot(draft.cur.rows); $('tP').textContent = t.p; $('tK').textContent = kg(t.k); $('err').textContent = ''; }
+
+function guardar() {
+  const prov = draft.items.length ? draft.proveedor : up($('prov').value);
+  const prod = up($('prod').value);
+  if (!prov) { $('err').textContent = 'FALTA EL PROVEEDOR'; $('prov').focus(); return; }
+  if (!prod) { $('err').textContent = 'FALTA EL PRODUCTO'; $('prod').focus(); return; }
+  const valid = [];
+  for (let i = 0; i < draft.cur.rows.length; i++) {
+    const r = draft.cur.rows[i];
+    if (!String(r.k).trim()) continue;
+    if (num(r.k) <= 0) { $('err').textContent = 'KILOS MAL CARGADOS EN RENGLÓN ' + (i + 1); focusKilos(i); return; }
+    if (!(parseInt(r.p) > 0)) { $('err').textContent = 'FALTAN LAS PIEZAS EN RENGLÓN ' + (i + 1); return; }
+    valid.push({ p: parseInt(r.p), k: r3(num(r.k)) });
+  }
+  if (!valid.length) { $('err').textContent = 'NO HAY NINGUNA PESADA CARGADA'; focusKilos(0); return; }
+  lastP = valid[valid.length - 1].p; LS.set('pz_lastP', lastP);
+  draft.proveedor = prov;
+  if (!draft.fecha) draft.fecha = new Date().toISOString();
+  draft.items.push({ id: uid(), producto: prod, pesadas: valid });
+  draft.cur = { producto: '', rows: [{ p: lastP, k: '' }] };
+  remember('prov', prov); remember('prod', prod);
+  saveDraft(); enqueueRec(false);
+  document.activeElement && document.activeElement.blur();
+  $('mMas').classList.add('on');
+}
+function terminar() {
+  if (draft.items.length) { enqueueRec(true); toast('✅ RECEPCIÓN GUARDADA'); }
+  draft = newDraft(); saveDraft(); renderPesar(); window.scrollTo(0, 0);
+}
+function recPayload(cerrada) { return { id: draft.id, fecha: draft.fecha, proveedor: draft.proveedor, cerrada, items: draft.items }; }
+function enqueueRec(cerrada) {
+  if (!draft.fecha) return;
+  enqueue({ k: 'rec:' + draft.id, a: 'saveRec', d: recPayload(cerrada) });
+}
+
+/* ---------- COLA / SINCRONIZACIÓN ---------- */
+function enqueue(op) {
+  op.v = uid();
+  queue = queue.filter(q => q.k !== op.k); queue.push(op);
+  LS.set('pz_queue', queue); syncBadge(); flush();
+}
+function syncBadge() {
+  const s = $('sync');
+  if (queue.length) { s.className = 'pend'; s.textContent = '⏳ ' + queue.length + ' SIN ENVIAR'; }
+  else { s.className = ''; s.textContent = navigator.onLine ? '✔ AL DÍA' : 'SIN RED'; }
+}
+let busy = false;
+function authFail(err) {
+  auth = null; LS.set('pz_auth', null);
+  showLogin(err === 'OTRO_CELU' ? '⚠ ESTA CLAVE SOLO FUNCIONA EN EL CELU DE NAHUEL' : '⚠ CLAVE INCORRECTA');
+}
+async function call(extra) {
+  const res = await fetch(API, { method: 'POST', body: JSON.stringify(Object.assign({ pass: auth && auth.pass, dev }, extra)) });
+  const j = await res.json();
+  if (j.auth) { authFail(j.error); throw new Error('AUTH'); }
+  if (!j.ok) throw new Error(j.error || 'ERROR');
+  if (j.names) { srvNames = j.names; LS.set('pz_srvnames', srvNames); }
+  return j;
+}
+async function flush(withList) {
+  if (busy || !auth || !API.startsWith('http')) { syncBadge(); return; }
+  if (!queue.length && !withList) { syncBadge(); return; }
+  busy = true;
+  const sent = queue.slice();
+  try {
+    const j = await call({ ops: sent, list: isAdmin() });
+    const ids = new Set(sent.map(o => o.k + o.v));
+    queue = queue.filter(o => !ids.has(o.k + o.v)); LS.set('pz_queue', queue);
+    if (j.data) { cache = j.data; LS.set('pz_cache', cache); if (view === 'ctl') renderCtl(); }
+  } catch (e) { }
+  busy = false; syncBadge();
+}
+async function loadList() { return flush(true); }
+
+/* ---------- VISTA CON CAMBIOS PENDIENTES ---------- */
+function merged() {
+  const map = new Map(cache.map(r => [r.id, JSON.parse(JSON.stringify(r))]));
+  queue.forEach(op => {
+    if (op.a === 'saveRec') {
+      const old = map.get(op.d.id);
+      const r = JSON.parse(JSON.stringify(op.d));
+      r.controlado = old ? old.controlado : false;
+      r.items.forEach(i => { const o = old && old.items.find(x => x.id === i.id); i.boleta = o ? o.boleta : ''; });
+      r.pend = true;
+      if (r.items.length) map.set(r.id, r); else map.delete(r.id);
+    }
+  });
+  queue.forEach(op => {
+    if (op.a === 'setBoleta') { map.forEach(r => r.items.forEach(i => { if (i.id === op.d.itemId) { i.boleta = op.d.kg; r.pend = true; } })); }
+    if (op.a === 'setCtl') { const r = map.get(op.d.recId); if (r) { r.controlado = op.d.val; r.pend = true; } }
+  });
+  return [...map.values()].filter(r => r.fecha).sort((a, b) => a.fecha < b.fecha ? 1 : -1);
+}
+
+/* ---------- PANTALLA CONTROL ---------- */
+function dayLabel(d) {
+  const t = new Date(); t.setHours(0, 0, 0, 0);
+  const x = new Date(d); x.setHours(0, 0, 0, 0);
+  const diff = Math.round((t - x) / 86400000);
+  if (diff === 0) return 'HOY';
+  if (diff === 1) return 'AYER';
+  return x.toLocaleDateString('es-AR', { weekday: 'long', day: '2-digit', month: '2-digit' }).toUpperCase();
+}
+const hora = d => new Date(d).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false });
+function renderCtl() {
+  const list = merged();
+  if (detId) { const r = list.find(x => x.id === detId); if (r) return renderDet(r); detId = null; }
+  $('ctlDet').classList.add('hide'); $('ctlList').classList.remove('hide');
+  if (!list.length) { $('ctlList').innerHTML = '<div class="empty">TODAVÍA NO HAY RECEPCIONES</div><button class="reset" id="rst">🔓 DESVINCULAR CELU DE NAHUEL</button>'; $('rst').onclick = () => armDel($('rst'), async () => { try { await call({ a: 'resetDev' }); toast('✅ LISTO'); } catch (e) { } }, '¿SEGURO? TOCÁ DE NUEVO'); return; }
+  let html = '', lastDay = '';
+  list.forEach(r => {
+    const dl = dayLabel(r.fecha);
+    if (dl !== lastDay) { html += `<div class="day">${dl}</div>`; lastDay = dl; }
+    let p = 0, k = 0; r.items.forEach(i => { const t = tot(i.pesadas); p += t.p; k += t.k; });
+    const b = !r.cerrada ? '<span class="bdg b-ab">CARGANDO</span>' : r.controlado ? '<span class="bdg b-ok">✅ CONTROLADO</span>' : '<span class="bdg b-pen">PENDIENTE</span>';
+    html += `<button class="rc" data-id="${r.id}"><div class="a"><span>${esc(r.proveedor)}</span>${b}</div>
+      <div class="b">${hora(r.fecha)} · ${r.items.length} PRODUCTO${r.items.length > 1 ? 'S' : ''} · ${p} PZ · ${kg(k)} KG${r.pend ? ' · ⏳' : ''}</div></button>`;
+  });
+  html += `<button class="reset" id="rst">🔓 DESVINCULAR CELU DE NAHUEL (SI CAMBIA DE CELU)</button>`;
+  $('ctlList').innerHTML = html;
+  $('rst').onclick = () => armDel($('rst'), async () => { try { await call({ a: 'resetDev' }); toast('✅ LISTO: NAHUEL PUEDE ENTRAR DESDE SU CELU NUEVO'); } catch (e) { toast('⚠ SIN CONEXIÓN, PROBÁ DE NUEVO', 'var(--bad)'); } renderCtl(); }, '¿SEGURO? TOCÁ DE NUEVO');
+  $('ctlList').querySelectorAll('.rc').forEach(b => b.onclick = () => { detId = b.dataset.id; renderCtl(); window.scrollTo(0, 0); });
+}
+function resHtml(t, bol) {
+  if (bol === '' || bol === null || bol === undefined || String(bol).trim() === '') return '';
+  const d = r3(t.k - num(bol));
+  if (Math.abs(d) <= TOL + 1e-9) return `<div class="res r-ok">✅ COINCIDE${d !== 0 ? ' (' + (d > 0 ? '+' : '−') + kg(Math.abs(d)) + ')' : ''}</div>`;
+  return `<div class="res r-w">⚠ ${d < 0 ? 'FALTAN' : 'SOBRAN'} ${kg(Math.abs(d))} KG</div>`;
+}
+function renderDet(r) {
+  $('ctlList').classList.add('hide'); const box = $('ctlDet'); box.classList.remove('hide');
+  const f = new Date(r.fecha);
+  let html = `<button class="back" id="bk">← VOLVER</button>
+    <div class="dh">${esc(r.proveedor)}</div>
+    <div class="ds">${f.toLocaleDateString('es-AR')} · ${hora(r.fecha)}${!r.cerrada ? ' · NAHUEL TODAVÍA ESTÁ CARGANDO' : ''}</div>`;
+  r.items.forEach(i => {
+    const t = tot(i.pesadas);
+    const bv = (i.boleta === '' || i.boleta === null || i.boleta === undefined) ? '' : kg(num(i.boleta));
+    html += `<div class="it"><div class="nm">${esc(i.producto)}</div>
+      <div class="g2"><div><div class="k">TOTAL PIEZAS</div><div class="v">${t.p}</div></div><div><div class="k">TOTAL KILOS</div><div class="v">${kg(t.k)}</div></div></div>
+      <div class="bol"><div class="k" style="font-size:13px;color:var(--mut)">KILOS SEGÚN BOLETA</div><input inputmode="decimal" enterkeyhint="done" data-id="${i.id}" value="${bv}" placeholder="0,000"></div>
+      <div id="res-${i.id}">${resHtml(t, i.boleta)}</div>
+      <button class="vp" data-id="${i.id}">${openPes[i.id] ? '▲ OCULTAR PESADAS' : '▼ VER PESADAS (' + i.pesadas.length + ')'}</button>
+      <div class="${openPes[i.id] ? '' : 'hide'}">${i.pesadas.map((p, n) => `<div class="pes"><span>${n + 1}</span><span>${p.p} PZ</span><span>${kg(num(p.k))} KG</span></div>`).join('')}</div></div>`;
+  });
+  html += r.controlado ? `<button class="ctl onn" id="ctl">✅ CONTROLADO · TOCÁ PARA DESHACER</button>` : `<button class="ctl off" id="ctl">MARCAR CONTROLADO</button>`;
+  box.innerHTML = html;
+  $('bk').onclick = () => { detId = null; renderCtl(); };
+  $('ctl').onclick = () => { enqueue({ k: 'ctl:' + r.id, a: 'setCtl', d: { recId: r.id, val: !r.controlado } }); toast(r.controlado ? 'QUITADO' : '✅ CONTROLADO'); renderCtl(); };
+  box.querySelectorAll('.vp').forEach(b => b.onclick = () => { openPes[b.dataset.id] = !openPes[b.dataset.id]; renderCtl(); });
+  box.querySelectorAll('.bol input').forEach(el => {
+    const it = r.items.find(x => x.id === el.dataset.id); const t = tot(it.pesadas);
+    el.oninput = () => { el.value = el.value.replace(/[^0-9.,]/g, ''); $('res-' + it.id).innerHTML = resHtml(t, el.value); };
+    const commit = () => {
+      const v = el.value.trim() === '' ? '' : r3(num(el.value));
+      const cur = (it.boleta === '' || it.boleta == null) ? '' : r3(num(it.boleta));
+      if (v === cur) return;
+      it.boleta = v;
+      enqueue({ k: 'bol:' + it.id, a: 'setBoleta', d: { itemId: it.id, kg: v } });
+    };
+    el.onchange = commit; el.onblur = commit;
+    el.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); el.blur(); } };
+  });
+}
+
+/* ---------- NAVEGACIÓN ---------- */
+function show(v) {
+  if (!isAdmin()) v = 'pesar';
+  $('tCtl').classList.toggle('hide', !isAdmin());
+  view = v;
+  $('tPesar').classList.toggle('on', v === 'pesar'); $('tCtl').classList.toggle('on', v === 'ctl');
+  $('vPesar').classList.toggle('hide', v !== 'pesar'); $('vCtl').classList.toggle('hide', v !== 'ctl');
+  $('foot').classList.toggle('hide', v !== 'pesar');
+  LS.set('pz_view', v);
+  if (v === 'ctl') { renderCtl(); loadList(); } else renderPesar();
+  window.scrollTo(0, 0);
+}
+$('tPesar').onclick = () => show('pesar');
+$('tCtl').onclick = () => { detId = null; show('ctl'); };
+$('prov').oninput = () => { draft.proveedor = up($('prov').value); saveDraft(); chips('provChips', 'prov', 'prov'); };
+$('prov').onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); $('prod').focus(); } };
+$('prod').oninput = () => { draft.cur.producto = up($('prod').value); saveDraft(); chips('prodChips', 'prod', 'prod'); };
+$('prod').onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); focusKilos(firstEmptyRow()); } };
+$('addRow').onclick = addRow;
+$('save').onclick = guardar;
+$('finRec').onclick = () => armDel($('finRec'), terminar, '¿SEGURO? TOCÁ DE NUEVO');
+$('mSi').onclick = () => { $('mMas').classList.remove('on'); renderPesar(); window.scrollTo(0, 0); setTimeout(() => $('prod').focus(), 50); };
+$('mNo').onclick = () => { $('mMas').classList.remove('on'); terminar(); };
+window.addEventListener('online', () => flush(true));
+window.addEventListener('offline', syncBadge);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) { view === 'ctl' ? loadList() : flush(); } });
+setInterval(() => { if (view === 'ctl') loadList(); else flush(); }, 30000);
+
+function showLogin(msg) { $('login').classList.remove('hide'); $('lErr').textContent = msg || ''; $('lPass').value = ''; setTimeout(() => $('lPass').focus(), 100); }
+async function login() {
+  const pass = $('lPass').value.trim();
+  if (!pass) { $('lErr').textContent = 'ESCRIBÍ LA CLAVE'; return; }
+  $('lBtn').textContent = '…';
+  try {
+    auth = { pass };
+    const j = await call({});
+    auth = { pass, role: j.role }; LS.set('pz_auth', auth);
+    $('login').classList.add('hide'); show(isAdmin() ? LS.get('pz_view', 'pesar') : 'pesar'); flush(true);
+  } catch (e) { if (e.message !== 'AUTH') { auth = null; $('lErr').textContent = '⚠ SIN CONEXIÓN. PROBÁ DE NUEVO'; } }
+  $('lBtn').textContent = 'ENTRAR';
+}
+$('lBtn').onclick = login;
+$('lPass').onkeydown = e => { if (e.key === 'Enter') login(); };
+if (!auth) showLogin(); else { show(LS.get('pz_view', 'pesar')); flush(true); }
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+</script>
+</body>
+</html>
